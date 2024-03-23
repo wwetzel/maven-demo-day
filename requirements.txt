@@ -1,0 +1,14 @@
+langchain_openai
+langchain
+langchain-community
+langchain-experimental
+pandas
+numpy
+plotly
+ipykernel
+PyYaml
+pyodbc
+nbformat
+python-dotenv
+openpyxl
+langchainhub
