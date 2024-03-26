@@ -42,15 +42,15 @@ from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 
-from utils import load_sqlite
+from utils import read_from_sqlite, load_sqlite
 
 db_uri = "sqlite:///hr_database.db"
 # db_uri_ro = "file:hr_database.db?mode=ro"
 data_fp = os.getenv('DATA_FP')# '/opt/ddlfiles/KDS_DEV/DATA/DS/maven/'
 hr_fn = "maven_final_synthetic_data.xlsx"
-print('LOADING SQLLITE')
-hr_df = load_sqlite(data_fp, hr_fn, db_uri)
-
+# print('LOADING SQLITE')
+hr_df = read_from_sqlite(db_uri)
+# hr_df = load_sqlite(data_fp, hr_fn, db_uri)
 python_repl = PythonREPLTool()
 repl_tool = Tool(
     name="python_repl",
@@ -163,40 +163,15 @@ async def start_chat():
 
     cl.user_session.set("settings", settings)
 
-@cl.on_message  # marks a function that should be run each time the chatbot receives a message from a user
+@cl.on_message
 async def main(message: cl.Message):
     settings = cl.user_session.get("settings")
 
     question = message.content
 
     response = agent_executor.invoke({"input": question})
-    response_content = response['output'] #response["response"].content
-    # combined_context = '\n'.join([document.page_content for document in response["context"]])
-    # page_numbers = set([document.metadata['page'] for document in response["context"]])
+    response_content = response['output']
 
     msg = cl.Message(content=response_content)
     await msg.send()
-
-# out_fp = './data/'
-# embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-# vector_store = FAISS.load_local(out_fp + 'nvidia_10k_faiss_index.bin', embeddings, allow_dangerous_deserialization=True)
-# retriever = vector_store.as_retriever()
-# openai_llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-
-# # ChatOpenAI Templates
-# template = """Answer the question based only on the following context. If you cannot answer the question with the context, respond with 'I don't know'. You'll get a big bonus and a potential promotion if you provide a high quality answer:
-
-# Context:
-# {context}
-
-# Question:
-# {question}
-# """
-# prompt_template = ChatPromptTemplate.from_template(template)
-# retrieval_augmented_qa_chain_openai = (
-#     {"context": itemgetter("question") | retriever, "question": itemgetter("question")}
-#     | RunnablePassthrough.assign(context=itemgetter("context"))
-#     | {"response": prompt_template | openai_llm, "context": itemgetter("context")}
-# )
-
 

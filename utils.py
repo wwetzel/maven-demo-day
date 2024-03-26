@@ -56,3 +56,20 @@ def load_sqlite(data_fp, hr_fn, db_uri):
     select_q = f"SELECT {select_cols} FROM exit_surveys"
     return pd.read_sql(select_q, conn)
     
+
+def read_from_sqlite(db_uri):
+    engine = create_engine(db_uri)
+    conn = engine.connect()
+    # metadata.create_all(engine)  # Creates the table
+
+    select_q = f"""SELECT term_year,
+                        term_month,
+                        job_title,
+                        business_unit,
+                        gender,
+                        main_quit_reason_text,
+                        main_quit_reason_text_sentiment,
+                        nps
+                 FROM exit_surveys"""
+    return pd.read_sql(select_q, conn)
+    
