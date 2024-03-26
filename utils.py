@@ -1,19 +1,20 @@
 import pandas as pd
 from sqlalchemy import create_engine, Integer, String, Float, Column, MetaData, Table
 
+
 def load_sqlite(data_fp, hr_fn, db_uri):
     hr_df = pd.read_excel(
-    data_fp + hr_fn,
-    dtype={
-        "Term Year": int,
-        "Term Month": int,
-        "Job Title": str,
-        "Business Unit": str,
-        "main_quit_reason_text": str,
-        "main_quit_reason_text_sentiment": str,
-        "nps": int,
-    },
-    ).drop(columns=["Unnamed: 0"])
+        data_fp + hr_fn,
+        dtype={
+            "Term Year": int,
+            "Term Month": int,
+            "Job Title": str,
+            "Business Unit": str,
+            "main_quit_reason_text": str,
+            "main_quit_reason_text_sentiment": str,
+            "nps": int,
+        },
+    )  # .drop(columns=["Unnamed: 0"])
 
     hr_df.columns = [
         "term_year",
@@ -51,8 +52,9 @@ def load_sqlite(data_fp, hr_fn, db_uri):
 
     # metadata.create_all(engine)  # Creates the table
 
-    hr_df.to_sql("exit_surveys", conn, if_exists="replace", index=False, dtype=data_types)
+    hr_df.to_sql(
+        "exit_surveys", conn, if_exists="replace", index=False, dtype=data_types
+    )
     select_cols = ",".join(hr_df.columns)
     select_q = f"SELECT {select_cols} FROM exit_surveys"
     return pd.read_sql(select_q, conn)
-    
