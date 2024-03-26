@@ -8,6 +8,7 @@ import os
 from openai import AsyncOpenAI
 import chainlit as cl
 from chainlit.playground.providers import ChatOpenAI
+
 from langchain.agents import create_openai_tools_agent
 from langchain.agents import Tool
 from langchain.agents.agent import AgentExecutor
@@ -41,8 +42,6 @@ from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 
-
-
 from utils import load_sqlite
 
 db_uri = "sqlite:///hr_database.db"
@@ -73,8 +72,14 @@ messages = [
 
 prompt = ChatPromptTemplate.from_messages(messages)
 
-documents = DataFrameLoader(hr_df, page_content_column="main_quit_reason_text").load()
-vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings())
+if os.path.exists("./chroma_db"):
+    print('LOADING CHROMA CACHE')
+    vectorstore = Chroma(persist_directory="./chroma_db", embedding_function=OpenAIEmbeddings())
+else:
+    print('LOADING CHROMA DOCUMENTS')
+    documents = DataFrameLoader(hr_df, page_content_column="main_quit_reason_text").load()
+    print('EMBEDDING CHROMA DOCUMENTS')
+    vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings(), persist_directory="./chroma_db")
 
 metadata_field_info = [
     AttributeInfo(
@@ -141,6 +146,8 @@ agent_executor = AgentExecutor(
     agent=openai_agent,
     tools = sql_tools + [repl_tool] + [retriever_tool],
     verbose=True,
+    return_intermediate_steps=True,
+    max_iterations=10
 )
 
 @cl.on_chat_start  # marks a function that will be executed at the start of a user session
@@ -162,14 +169,13 @@ async def main(message: cl.Message):
 
     question = message.content
 
-    response = retrieval_augmented_qa_chain_openai.invoke({"question": question})
-    response_content = response["response"].content
-    combined_context = '\n'.join([document.page_content for document in response["context"]])
-    page_numbers = set([document.metadata['page'] for document in response["context"]])
+    response = agent_executor.invoke({"input": question})
+    response_content = response['output'] #response["response"].content
+    # combined_context = '\n'.join([document.page_content for document in response["context"]])
+    # page_numbers = set([document.metadata['page'] for document in response["context"]])
 
     msg = cl.Message(content=response_content)
     await msg.send()
-
 
 # out_fp = './data/'
 # embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
