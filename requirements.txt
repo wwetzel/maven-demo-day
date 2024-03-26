@@ -12,3 +12,6 @@ nbformat
 python-dotenv
 openpyxl
 langchainhub
+chromadb
+chainlit
+lark
