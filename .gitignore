@@ -5,7 +5,6 @@ git_bkp
 __pycache__/
 *.py[cod]
 *$py.class
-.chainlit/
 # C extensions
 *.so
 

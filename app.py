@@ -165,7 +165,7 @@ async def start_chat():
 
 @cl.on_message
 async def main(message: cl.Message):
-    settings = cl.user_session.get("settings")
+    # settings = cl.user_session.get("settings")
 
     question = message.content
 
